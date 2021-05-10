@@ -1,0 +1,67 @@
+{
+  "name": "typescript-vue-starter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Daniel Rosenwasser",
+    "url": "https://github.com/DanielRosenwasser"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@types/crypto-js": "^4.0.1",
+    "axios": "^0.21.1",
+    "crypto-js": "^4.0.0",
+    "js-sha256": "^0.9.0",
+    "jwt-decode": "^3.1.2",
+    "moment": "^2.29.1",
+    "vue": "^2.6.12",
+    "vue-class-component": "^6.0.0",
+    "vue-property-decorator": "^6.0.0",
+    "vue-router": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.2",
+    "@types/node": "^15.0.2",
+    "@vue/test-utils": "^1.0.0-beta.25",
+    "css-loader": "^0.28.1",
+    "jest": "^23.6.0",
+    "ts-jest": "^23.10.3",
+    "ts-loader": "^2.0.3",
+    "typescript": "3.5.1",
+    "vue-jest": "^2.6.0",
+    "vue-loader": "^12.0.3",
+    "vue-template-compiler": "^2.6.10",
+    "webpack": "^2.5.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "ts",
+      "vue"
+    ],
+    "modulePaths": [
+      "<rootDir>/src",
+      "<rootDir>/node_modules"
+    ],
+    "transform": {
+      ".*\\.(vue)$": "<rootDir>/node_modules/vue-jest",
+      ".*\\.(ts)$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "globals": {
+      "vue-jest": {
+        "tsConfigFile": "tsconfig.json"
+      }
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$"
+  }
+}
