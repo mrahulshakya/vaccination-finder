@@ -14,6 +14,8 @@ export class VaccinationService {
             };
             const response = await axios.get(`${this.baseUrl}/appointment/sessions/calendarByDistrict`, options);
             if (response.status === 200) {
+                document.body.style.backgroundColor = "white";
+
                 const centers = response.data.centers;
                 let matchingCenters: any[] = [];
                 if (centers && centers.length > 0) {
@@ -23,6 +25,10 @@ export class VaccinationService {
                             const matchingSession = sessions.find((x: any) => x.min_age_limit && x.min_age_limit === 18 && x.available_capacity >= minimumRq);
 
                             if (matchingSession) {
+                                document.body.style.backgroundColor = "red";
+                                (document as any).getElementById("myAudio").loop = true;
+                                (document as any).getElementById("myAudio").play();
+
                                 matchingCenters.push({
                                     center_id: center.center_id,
                                     name: center.name,
@@ -58,6 +64,8 @@ export class VaccinationService {
 
 
     async generateOtp(number: Number) {
+        document.body.style.backgroundColor = "green";
+
         try {
             let options = {
                 headers: {
@@ -158,7 +166,7 @@ export class VaccinationService {
             const options: AxiosRequestConfig = {
                 headers: { 'authorization': `Bearer ${token}` },
             };
-            const response = await axios.post(`${this.baseUrl}/auth/getRecaptcha`,{}, options);
+            const response = await axios.post(`${this.baseUrl}/auth/getRecaptcha`, {}, options);
             if (response && response.status === 200) {
                 return {
                     data: response.data.captcha
@@ -180,7 +188,7 @@ export class VaccinationService {
 
     async scheduleSlot(token: string, captcha: string, centerId: number, sessionId: string, slot: string, beneficiaries: string[]) {
         try {
-           
+
             let options = {
                 headers: {
                     'content-type': 'application/json',
@@ -188,6 +196,9 @@ export class VaccinationService {
                 },
 
             };
+
+            (document as any).getElementById("myAudio").pause();
+
 
             let data = {
                 center_id: centerId,
