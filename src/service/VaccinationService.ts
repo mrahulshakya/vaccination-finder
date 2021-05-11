@@ -5,12 +5,13 @@ import jwt_decode from "jwt-decode";
 
 export class VaccinationService {
     baseUrl = 'https://cdn-api.co-vin.in/api/v2'
-    async getAvailableCenters(minimumRq: number) {
+    async getAvailableCenters(token:string, minimumRq: number) {
         try {
             const today = moment().format('DD-MM-YYYY');
             // Pune 363, Bhopal 312
             const options: AxiosRequestConfig = {
                 params: { district_id: '363', date: today },
+                headers: { 'authorization': `Bearer ${token}` },
             };
             const response = await axios.get(`${this.baseUrl}/appointment/sessions/calendarByDistrict`, options);
             if (response.status === 200) {

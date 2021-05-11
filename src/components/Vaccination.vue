@@ -303,7 +303,7 @@ export default class Vaccination extends Vue {
         this.generateOtp();
         clearInterval(this.timer);
       } else {
-        const response = await service.getAvailableCenters(
+        const response = await service.getAvailableCenters(this.token,
           (this.participants && this.participants.length) || 0
         );
         if (response && response.data) {
