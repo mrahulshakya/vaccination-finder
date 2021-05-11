@@ -1,5 +1,6 @@
 <template>
   <div class="container">
+    <preferences @preferenceChange="handlePreferenceChange"></preferences>
     <div class="row">
       <div class="col col-8">
         <div class="row">
@@ -53,7 +54,7 @@
           </button>
         </div>
         <div class="row form-group" v-if="captcha">
-          <h6>Enter captcha to book the center for: {{ prefferedSlot }}</h6>
+          <h6>Enter captcha to book the center for: {{ prefferedDate }} {{ prefferedSlot }}</h6>
           <h7>{{ prefferedSlotText }}</h7>
           <div v-html="captcha"></div>
           <input
@@ -166,7 +167,12 @@ import { Vue, Component, Prop } from "vue-property-decorator";
 import { VaccinationService } from "../service/VaccinationService";
 import jwt_decode from "jwt-decode";
 import { clear } from "console";
-@Component
+import Preferences from './Preferences.vue';
+
+@Component({
+  name: 'Vaccination',
+  components: { Preferences }
+})
 export default class Vaccination extends Vue {
   @Prop() name!: string;
   @Prop() initialEnthusiasm!: number;
@@ -189,6 +195,7 @@ export default class Vaccination extends Vue {
   participants: any[] | null = null;
   captcha: string = "";
   captchaText: string = "";
+  preferences: any;
 
   async mounted() {
     this.phoneNumber = sessionStorage.getItem("phoneNumber");
@@ -221,6 +228,15 @@ export default class Vaccination extends Vue {
     }
 
     return "";
+  }
+
+  get prefferedDate() {
+    const mathingSession = this.matches && this.matches[0];
+    if(mathingSession) {
+      return mathingSession.date;
+    }
+
+    return ''
   }
 
   get prefferedSlotText() {
@@ -304,7 +320,7 @@ export default class Vaccination extends Vue {
         clearInterval(this.timer);
       } else {
         const response = await service.getAvailableCenters(this.token,
-          (this.participants && this.participants.length) || 0
+          (this.participants && this.participants.length) || 0, this.preferences
         );
         if (response && response.data) {
           if (response.data.length === 0) {
@@ -357,6 +373,8 @@ export default class Vaccination extends Vue {
     }
 
     sessionStorage.removeItem("phoneNumber");
+    sessionStorage.removeItem('preference');
+    sessionStorage.removeItem('states');
     window.location.reload();
   }
 
@@ -411,6 +429,11 @@ export default class Vaccination extends Vue {
     
 
   }
+
+  handlePreferenceChange(preferences: any) {
+    this.preferences = preferences;
+  }
+
 }
 </script>
 

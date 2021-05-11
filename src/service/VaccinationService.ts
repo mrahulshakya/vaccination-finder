@@ -5,12 +5,28 @@ import jwt_decode from "jwt-decode";
 
 export class VaccinationService {
     baseUrl = 'https://cdn-api.co-vin.in/api/v2'
-    async getAvailableCenters(token:string, minimumRq: number) {
+    async getAvailableCenters(token:string, minimumRq: number, preferences: any) {
         try {
-            const today = moment().format('DD-MM-YYYY');
+
+            let date = moment().add(1, 'day').format('DD-MM-YYYY');
+            if(preferences && preferences.date && moment(preferences.date).isValid()) {
+                date = moment(preferences.date).format('DD-MM-YYYY');
+            }
+
+            let district  = 363;
+            if(preferences && preferences.district) {
+                district = preferences.district.district_id;
+            }
+
+            let age = 18;
+
+            if(preferences && preferences.age) {
+                age = preferences.age;
+            }
+
             // Pune 363, Bhopal 312
             const options: AxiosRequestConfig = {
-                params: { district_id: '363', date: today },
+                params: { district_id: district , date: date },
                 headers: { 'authorization': `Bearer ${token}` },
             };
             const response = await axios.get(`${this.baseUrl}/appointment/sessions/calendarByDistrict`, options);
@@ -23,7 +39,7 @@ export class VaccinationService {
                     centers.forEach((center: any) => {
                         const sessions = center.sessions;
                         if (sessions && sessions.length > 0) {
-                            const matchingSession = sessions.find((x: any) => x.min_age_limit && x.min_age_limit === 18 && x.available_capacity >= minimumRq);
+                            const matchingSession = sessions.find((x: any) => x.min_age_limit && x.min_age_limit === age && x.available_capacity >= minimumRq);
 
                             if (matchingSession) {
                                 document.body.style.backgroundColor = "red";
@@ -39,6 +55,7 @@ export class VaccinationService {
                                     age_limit: matchingSession.min_age_limit,
                                     slots: matchingSession.slots,
                                     capacity: matchingSession.available_capacity,
+                                    date: matchingSession.date
                                 })
                             }
 
@@ -59,6 +76,56 @@ export class VaccinationService {
             return {
                 data: null,
                 error: `Failed to get the available centers. ${ex}`
+            }
+        }
+    }
+
+    async getStates() {
+        // https://cdn-api.co-vin.in/api/v2/admin/location/states
+        try {
+            const response = await axios.get(`${this.baseUrl}/admin/location/states`);
+            if (response.status === 200) {
+                return {
+                    data: {
+                        states : response.data.states
+                    },
+                    error: null,
+                }
+            }
+
+            return {
+                data: null,
+                error: 'Failed to get states.'
+            }
+        } catch (ex) {
+            return {
+                data: null,
+                error: `Failed to get the states. ${ex}`
+            }
+        }
+    }
+
+    async getDistrict(stateId: number) {
+        // https://cdn-api.co-vin.in/api/v2/admin/location/districts/4
+        try {
+            const response = await axios.get(`${this.baseUrl}/admin/location/districts/${stateId}`);
+            if (response.status === 200) {
+                return {
+                    data: {
+                        districts : response.data.districts
+                    },
+                    error: null,
+                }
+            }
+
+            return {
+                data: null,
+                error: 'Failed to get district.'
+            }
+        } catch (ex) {
+            return {
+                data: null,
+                error: `Failed to get district. ${ex}`
             }
         }
     }
