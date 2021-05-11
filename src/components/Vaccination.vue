@@ -229,7 +229,7 @@ export default class Vaccination extends Vue {
            this.generateOtp();
            clearInterval(this.timer);
          } else {
-            const response = await service.getAvailableCenters(this.participants && this.participants.length || 0);
+            const response = await service.getAvailableCenters(this.token, this.participants && this.participants.length || 0);
             if(response && response.data) {
               if(response.data.length === 0) {
                 this.displayMessage('No match found. Retrying after one minute.')
@@ -251,7 +251,7 @@ export default class Vaccination extends Vue {
               this.disableOtp = false;
             }
          }
-      }, 5000)
+      }, 3000)
     }
 
     async handlePhoneSubmit() {
