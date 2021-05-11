@@ -4,7 +4,7 @@
     <div class="row">
       <div class="col col-8">
         <div class="row">
-          <h1>Schedule me for Pune</h1>
+          <h1>Schedule me for {{ currentDistrict }}</h1>
           <audio id="myAudio" controls>
             <source
               src="https://www.w3schools.com/jsref/horse.ogg"
@@ -432,6 +432,16 @@ export default class Vaccination extends Vue {
 
   handlePreferenceChange(preferences: any) {
     this.preferences = preferences;
+    this.currentDistrict = this.preferences.district.district_name;
+  }
+
+  cDistrict = 'Pune';
+  get currentDistrict() {
+    return this.cDistrict;
+  }
+
+  set currentDistrict(name: string) {
+    this.cDistrict = name;
   }
 
 }
