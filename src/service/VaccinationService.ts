@@ -42,7 +42,7 @@ export class VaccinationService {
                             const matchingSession = sessions.find((x: any) => x.min_age_limit && x.min_age_limit === age && x.available_capacity >= minimumRq);
 
                             if (matchingSession) {
-                                document.body.style.backgroundColor = "red";
+                                //document.body.style.backgroundColor = "red";
                                 (document as any).getElementById("myAudio").loop = true;
                                 (document as any).getElementById("myAudio").play();
 
@@ -62,6 +62,43 @@ export class VaccinationService {
                         }
                     });
                 }
+                return {
+                    data: matchingCenters.sort((a, b) => b.capacity - a.capacity),
+                    error: null,
+                }
+            }
+
+            return {
+                data: null,
+                error: 'Failed to get the available centers.'
+            }
+        } catch (ex) {
+            return {
+                data: null,
+                error: `Failed to get the available centers. ${ex}`
+            }
+        }
+    }
+
+    async getAllCenters(districtId: any) {
+        try {
+
+            let date = moment().format('DD-MM-YYYY');
+            // Pune 363, Bhopal 312
+            const options: AxiosRequestConfig = {
+                params: { district_id: districtId , date: date },
+            };
+            const response = await axios.get(`${this.baseUrl}/appointment/sessions/calendarByDistrict`, options);
+            if (response.status === 200) {
+        
+                const centers = response.data.centers;
+                let matchingCenters: any[] = [];
+                if (centers && centers.length > 0) {
+                    matchingCenters = centers.map((x: any) => {
+                        return {id : x.center_id, name: `${x.name} (${x.address})`};
+                    })
+                }
+
                 return {
                     data: matchingCenters,
                     error: null,
@@ -211,7 +248,8 @@ export class VaccinationService {
                             name: x.name,
                             id: x.beneficiary_reference_id,
                             gender: x.gender,
-                            photoId: x.photo_id_number
+                            photoId: x.photo_id_number,
+                            dose1_date : x.dose1_date,
                         }
                     })
                 }
@@ -289,9 +327,10 @@ export class VaccinationService {
                 error: 'Faile to schedule slot'
             }
         } catch (e) {
+            console.error(e.response);
             return {
                 data: null,
-                error: `Error: ${e}`,
+                error: `${e}`,
             }
         }
     }

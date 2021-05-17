@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <preferences @preferenceChange="handlePreferenceChange"></preferences>
+    <preferences @preferenceChange="handlePreferenceChange" :errorMessage="errorMessage"></preferences>
     <div class="row">
       <div class="col col-8">
         <div class="row">
@@ -25,6 +25,9 @@
           <a href="javascript:void(0)" @click="resume()" class="margin-left-20"
             >Resume</a
           >
+          <span class="margin-left-20"> Token Valid Till : {{ leftTime }}</span>
+          <div class="captcha" v-html="captcha2"></div>
+          <input v-model="captchaText" />
         </div>
         <div class="row form-group" v-if="!this.phoneSubmitted">
           <input
@@ -53,19 +56,6 @@
             Start Booking
           </button>
         </div>
-        <div class="row form-group" v-if="captcha">
-          <h6>Enter captcha to book the center for: {{ prefferedDate }} {{ prefferedSlot }}</h6>
-          <h7>{{ prefferedSlotText }}</h7>
-          <div v-html="captcha"></div>
-          <input
-            name="captha"
-            type="text"
-            class="form-control-inline"
-            placeholder="Enter captcha"
-            v-model="captchaText"
-          />
-          <button @click="schedule()">Schedule</button>
-        </div>
       </div>
       <div class="col col-4">
         <div class="message">
@@ -80,6 +70,14 @@
           </p>
         </div>
       </div>
+    </div>
+    <div v-if="pMatches && pMatches.length > 0">
+       <h6 class="alert alert-success">Preferred Centers</h6>
+      <matches :matches="pMatches" :captcha="captcha" :token="token" :participants="participants" @startSchedule="handleScheduling" :preferredCenters="preferredCenters"></matches>
+    </div>
+    <div v-if="npMatches && npMatches.length > 0">
+       <h6 class="alert alert-danger">Other Centers (Not in preference)</h6>
+       <matches :matches="npMatches" :captcha="captcha" :token="token" :participants="participants" @startSchedule="handleScheduling" :preferredCenters="preferredCenters"></matches>
     </div>
     <div class="participant row" v-if="participants && participants.length > 0">
       <table class="table table-striped">
@@ -101,55 +99,6 @@
         </tbody>
       </table>
     </div>
-    <div class="row" v-if="matches && matches.length > 0">
-      <div class="row matching">
-        <h5>
-          Found {{ matches.length }} centers with vacines and trying to book
-        </h5>
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>CenterId</th>
-              <th>SessionId</th>
-              <th>Name</th>
-              <th>Address</th>
-              <th>Vaccine</th>
-              <th>Age</th>
-              <th>Capacity</th>
-              <!-- <th>
-                 Slots
-               </th> -->
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(match, index) in matches" :key="`matched_${index}`">
-              <td>
-                <p>{{ match.center_id }}</p>
-              </td>
-              <td>
-                <p>{{ match.session_id }}</p>
-              </td>
-              <td>
-                <p>{{ match.name }}</p>
-              </td>
-              <td>
-                <p>{{ match.address }}</p>
-              </td>
-              <td>
-                <p>{{ match.vaccine }}</p>
-              </td>
-              <td>
-                <p>{{ match.age_limit }}</p>
-              </td>
-              <td>
-                <p>{{ match.capacity }}</p>
-              </td>
-              <!-- <td><p class="row" v-for="(slot, slotIndex) in match.slots" :key="`slot${slotIndex}`">{{ slot }}</p></td> -->
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </div>
 </template>
 <style>
@@ -166,12 +115,12 @@ import moment from "moment";
 import { Vue, Component, Prop } from "vue-property-decorator";
 import { VaccinationService } from "../service/VaccinationService";
 import jwt_decode from "jwt-decode";
-import { clear } from "console";
 import Preferences from './Preferences.vue';
+import Matches from './Matches.vue';
 
 @Component({
   name: 'Vaccination',
-  components: { Preferences }
+  components: { Preferences, Matches }
 })
 export default class Vaccination extends Vue {
   @Prop() name!: string;
@@ -182,6 +131,8 @@ export default class Vaccination extends Vue {
   phoneNumber: any = 0;
   phoneSubmitted: boolean = false;
   matches: any[] = [];
+  pMatches: any[] = [];
+  npMatches: any[] = [];
   enthusiasm = this.initialEnthusiasm;
   attempt: number = 0;
   timeForTokenToExpire: number = 0;
@@ -194,8 +145,19 @@ export default class Vaccination extends Vue {
   timer: any;
   participants: any[] | null = null;
   captcha: string = "";
+    captcha2: string = "";
   captchaText: string = "";
   preferences: any;
+  timeLeft: number = 0;
+  preferredCenters: any[] = [];
+  errorMessage: string = '';
+  get leftTime() {
+    return this.timeLeft;
+  }
+
+  set leftTime(value: number) {
+    this.timeLeft = value;
+  }
 
   async mounted() {
     this.phoneNumber = sessionStorage.getItem("phoneNumber");
@@ -262,12 +224,21 @@ export default class Vaccination extends Vue {
     return "";
   }
 
-  get isTokenExpired() {
+  isTokenExpired() {
     if (this.token) {
       let tokenExpiry: any = jwt_decode(this.token);
-      const date = new Date(0);
-      date.setUTCSeconds(tokenExpiry.exp);
-      if (moment(date).isBefore(moment())) {
+      const expTime = tokenExpiry.exp;
+      const currentTime = new Date().getTime()  / 1000;
+      this.leftTime = 0;
+      
+      if(!expTime) {
+        return true;
+      }
+
+      this.leftTime = expTime - currentTime;
+      console.log('time left token: ', this.leftTime);
+      this.$forceUpdate();
+      if (!expTime || expTime <= currentTime ) {
         return true;
       }
 
@@ -276,6 +247,7 @@ export default class Vaccination extends Vue {
 
     return true;
   }
+
   async handleOnComplete() {
     console.log("OTP completed: ", this.otpValue);
     const service = new VaccinationService();
@@ -296,20 +268,34 @@ export default class Vaccination extends Vue {
         } else {
           this.displayMessage("Failed to get the list of participants.");
         }
+
+        const captchaResponse = await this.vaccinationService.getCaptcha(this.token);
+        if(captchaResponse && captchaResponse.data) {
+          this.captcha2 = captchaResponse.data;
+        }
       }
     } else if (tokenResponse && tokenResponse.error) {
       this.displayMessage(tokenResponse.error);
     }
   }
 
-  performBooking() {
+  performBooking(interval:number = 3000) {
+    document.body.style.backgroundColor = "white";
+    if(this.timer) {
+      clearInterval(this.timer);
+    }
+
     this.timer = setInterval(async () => {
       this.disableOtp = true;
       this.matches = [];
+      this.pMatches = [];
+      this.npMatches = [];
+    
       this.messages = [];
+      this.captcha = '';
       const service = new VaccinationService();
       this.displayMessage(`Attempt No: ${++this.attempt}`);
-      if (this.isTokenExpired) {
+      if (this.isTokenExpired()) {
         this.displayMessage(
           "token expired. Please enter otp again and press submit to proceed."
         );
@@ -326,7 +312,23 @@ export default class Vaccination extends Vue {
           if (response.data.length === 0) {
             this.displayMessage("No match found. Retrying after one minute.");
           } else {
-            this.matches.push(response.data[0]);
+            this.matches = response.data;
+
+            if(this.preferredCenters && this.preferredCenters.length) {
+              this.pMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id === x.center_id));
+              if(this.captchaText) {
+                if(this.timer) {
+                  clearInterval(this.timer);
+                }
+                this.handleScheduling(this.pMatches, this.captchaText);
+              }
+              this.npMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id !== x.center_id)).slice(0, 5);
+            } else {
+              this.pMatches = this.matches;
+              this.npMatches = [];
+            }
+
+      
             const captchResponse = await this.vaccinationService.getCaptcha(
               this.token
             );
@@ -345,7 +347,7 @@ export default class Vaccination extends Vue {
           this.disableOtp = false;
         }
       }
-    }, 3000);
+    }, interval);
   }
 
   async handlePhoneSubmit() {
@@ -368,6 +370,8 @@ export default class Vaccination extends Vue {
   clear() {
     this.messages = [];
     this.matches = [];
+      this.pMatches = [];
+      this.npMatches = [];
     if (this.timer) {
       clearInterval(this.timer);
     }
@@ -386,28 +390,42 @@ export default class Vaccination extends Vue {
     }
   }
 
-  resume() {
-    if (this.token && !this.isTokenExpired) {
-      this.performBooking();
+  resume(interval: number = 3000) {
+    if (this.token && !this.isTokenExpired()) {
+      this.performBooking(interval);
     } else {
+      this.otpValue = "";
+      this.disableOtp = false;
+      this.messages = ["Please enter otp and try again"];
+      this.vaccinationService.generateOtp(this.phoneNumber);
       this.displayMessage("Enter otp to continue.");
     }
     (document as any).getElementById("myAudio").pause();
   }
 
-  async schedule() {
-    const mathingSession = this.matches && this.matches[0];
+  async handleScheduling(match:any, captchaText: string) {
+    this.captchaText = captchaText;
+    await this.schedule(match);
+  }
+
+  async schedule(mathingSession: any, refresh = true) {
     const beneficiaries: string[] =
-      (this.participants && this.participants.map((x) => x.id)) || [];
+      (this.participants && this.participants.filter(x=> x.dose1_date === '').map((x) => x.id)) || [];
     if (!this.captchaText || beneficiaries.length <= 0 || !mathingSession) {
-      this.displayMessage("Insufficient Data. Cannot schedule slot.");
-      this.performBooking();
+      this.errorMessage = "Insufficient Data. Cannot schedule slot.";
+      this.displayMessage(this.errorMessage);
+      if(refresh) {
+        this.resume(200);
+      }
       return;
     }
 
     if (!this.prefferedSlot) {
-      this.displayMessage("Insufficient Data.Not slot available");
-      this.performBooking();
+       this.errorMessage = "Insufficient Data.Not slot available";
+      this.displayMessage(this.errorMessage);
+      if(refresh) {
+        this.resume(200);
+      }
       return;
     }
 
@@ -421,10 +439,21 @@ export default class Vaccination extends Vue {
     );
     if (scheduleResponse && scheduleResponse.data) {
       this.displayMessage(JSON.stringify(scheduleResponse.data));
+      this.matches = [];
+      this.pMatches = [];
+      this.npMatches = [];
+      this.captcha = '';
+      this.captchaText = '';
+      
+      window.alert(`Booked successfully. ${JSON.stringify(scheduleResponse.data)}`);
     }
 
     if (scheduleResponse && scheduleResponse.error) {
+      this.errorMessage = `${scheduleResponse.error}`;
       this.displayMessage(scheduleResponse.error);
+      if(refresh) {
+        this.resume(200);
+      }
     }
     
 
@@ -433,6 +462,7 @@ export default class Vaccination extends Vue {
   handlePreferenceChange(preferences: any) {
     this.preferences = preferences;
     this.currentDistrict = this.preferences.district.district_name;
+    this.preferredCenters = this.preferences.centers;
   }
 
   cDistrict = 'Pune';
