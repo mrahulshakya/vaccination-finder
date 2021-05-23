@@ -24,6 +24,11 @@ export class VaccinationService {
                 age = preferences.age;
             }
 
+            let currentDose = 1; 
+            if(preferences && preferences.dose) {
+                currentDose = preferences.dose;
+            }
+
             // Pune 363, Bhopal 312
             const options: AxiosRequestConfig = {
                 params: { district_id: district , date: date },
@@ -39,8 +44,13 @@ export class VaccinationService {
                     centers.forEach((center: any) => {
                         const sessions = center.sessions;
                         if (sessions && sessions.length > 0) {
-                            const matchingSession = sessions.find((x: any) => x.min_age_limit && x.min_age_limit === age && x.available_capacity >= minimumRq);
-
+                            let matchingSession:any = null; 
+                            if(currentDose === 1) {
+                                matchingSession = sessions.find((x: any) => x.min_age_limit && x.min_age_limit === age && x.available_capacity_dose1 >= minimumRq);   
+                            } else {
+                                matchingSession = sessions.find((x: any) => x.min_age_limit && x.min_age_limit === age && x.available_capacity_dose2 >= minimumRq);   
+                            }
+                       
                             if (matchingSession) {
                                 //document.body.style.backgroundColor = "red";
                                 (document as any).getElementById("myAudio").loop = true;
@@ -54,7 +64,7 @@ export class VaccinationService {
                                     vaccine: matchingSession.vaccine,
                                     age_limit: matchingSession.min_age_limit,
                                     slots: matchingSession.slots,
-                                    capacity: matchingSession.available_capacity,
+                                    capacity: currentDose === 1 ? matchingSession.available_capacity_dose1: matchingSession.available_capacity_dose2,
                                     date: matchingSession.date
                                 })
                             }

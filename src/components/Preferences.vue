@@ -7,6 +7,7 @@
                <th v-if="district && district.length > 0">District</th>
                <th>Age</th>
                <th>Date</th>
+                <th>Dose</th>
             </tr>
         </thead>
         <tbody>
@@ -21,6 +22,11 @@
                     @option:selected="savePreferences"></v-select></td>
                     <td >
                         <date-picker v-model="searchDate" @change="savePreferences"></date-picker></td>
+                    <td>
+                        <v-select :options="dose" 
+                    v-model="currentDose" 
+                    @option:selected="savePreferences"></v-select>
+                    </td>
             </tr>
             <tr v-if="centers && centers.length > 0" >
                      <td colspan="4"> 
@@ -75,7 +81,8 @@ export default class Preferences extends Vue {
 
     preferences: any|null = null;
     district: any[] = [];
-    age: number[] = [18, 45]
+    age: number[] = [18, 45];
+    dose: number[] = [1, 2];
     @Prop({default : ''}) errorMessage!:string;
     vaccinationService = new VaccinationService();
     activeState: any = { state_id : 21,  state_name: 'Maharastra'};
@@ -85,6 +92,7 @@ export default class Preferences extends Vue {
     selectedCenters: any[] = [];
     centers: any[] = [];
     values: any[]  = [];
+    currentDose = 1;
 
     beforeMount() {
         this.searchDate = moment().add(1, 'day').toDate();
@@ -98,6 +106,7 @@ export default class Preferences extends Vue {
             this.activeState = this.preferences.state;
             this.activeDistrict = this.preferences.activeDistrict;
             this.searchDate = this.preferences.date;
+            this.currentDose = this.preferences.dose;
             this.selectedCenters = [];
         }  else {
             this.savePreferences();
@@ -164,6 +173,7 @@ export default class Preferences extends Vue {
             district  : this.activeDistrict,
             date: this.searchDate,
             centers: this.selectedCenters,
+            dose: this.currentDose,
         }
 
         sessionStorage.setItem('preference', JSON.stringify(preferences));

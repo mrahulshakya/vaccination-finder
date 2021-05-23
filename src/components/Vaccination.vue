@@ -26,8 +26,8 @@
             >Resume</a
           >
           <span class="margin-left-20"> Token Valid Till : {{ leftTime }}</span>
-          <div class="captcha" v-html="captcha2"></div>
-          <input v-model="captchaText" />
+          <!-- <div class="captcha" v-html="captcha2"></div>
+          <input v-model="captchaText" /> -->
         </div>
         <div class="row form-group" v-if="!this.phoneSubmitted">
           <input
@@ -73,11 +73,11 @@
     </div>
     <div v-if="pMatches && pMatches.length > 0">
        <h6 class="alert alert-success">Preferred Centers</h6>
-      <matches :matches="pMatches" :captcha="captcha" :token="token" :participants="participants" @startSchedule="handleScheduling" :preferredCenters="preferredCenters"></matches>
+      <matches :matches="pMatches" :captcha="captcha" :token="token" :participants="participants" @startSchedule="handleScheduling" :preferredCenters="preferredCenters" :dose="preferences.dose"></matches>
     </div>
     <div v-if="npMatches && npMatches.length > 0">
        <h6 class="alert alert-danger">Other Centers (Not in preference)</h6>
-       <matches :matches="npMatches" :captcha="captcha" :token="token" :participants="participants" @startSchedule="handleScheduling" :preferredCenters="preferredCenters"></matches>
+       <matches :matches="npMatches" :captcha="captcha" :token="token" :participants="participants" @startSchedule="handleScheduling" :preferredCenters="preferredCenters" :dose="preferences.dose"></matches>
     </div>
     <div class="participant row" v-if="participants && participants.length > 0">
       <table class="table table-striped">
@@ -473,7 +473,6 @@ export default class Vaccination extends Vue {
   set currentDistrict(name: string) {
     this.cDistrict = name;
   }
-
 }
 </script>
 

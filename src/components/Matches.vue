@@ -13,7 +13,7 @@
                     Vaccine
                 </th>
                 <th>
-                    Available
+                    Available (Dose {{ dose }})
                 </th>
                 <th>
                     Address
@@ -65,6 +65,7 @@ export default class Matches extends Vue {
     @Prop({default : () => []}) participants!: string[];
     @Prop({ default : ''}) token!: string; 
     @Prop({default: ''}) captcha!:string;
+    @Prop({default: 1}) dose!: number;
 
    
     captchaText = '';
