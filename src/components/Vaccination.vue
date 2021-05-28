@@ -279,7 +279,7 @@ export default class Vaccination extends Vue {
     }
   }
 
-  performBooking(interval:number = 3000) {
+  performBooking(interval:number = 10000) {
     document.body.style.backgroundColor = "white";
     if(this.timer) {
       clearInterval(this.timer);
@@ -390,7 +390,7 @@ export default class Vaccination extends Vue {
     }
   }
 
-  resume(interval: number = 3000) {
+  resume(interval: number = 10000) {
     if (this.token && !this.isTokenExpired()) {
       this.performBooking(interval);
     } else {
@@ -415,7 +415,7 @@ export default class Vaccination extends Vue {
       this.errorMessage = "Insufficient Data. Cannot schedule slot.";
       this.displayMessage(this.errorMessage);
       if(refresh) {
-        this.resume(200);
+        this.resume(3000);
       }
       return;
     }
@@ -424,7 +424,7 @@ export default class Vaccination extends Vue {
        this.errorMessage = "Insufficient Data.Not slot available";
       this.displayMessage(this.errorMessage);
       if(refresh) {
-        this.resume(200);
+        this.resume(3000);
       }
       return;
     }
@@ -452,7 +452,7 @@ export default class Vaccination extends Vue {
       this.errorMessage = `${scheduleResponse.error}`;
       this.displayMessage(scheduleResponse.error);
       if(refresh) {
-        this.resume(200);
+        this.resume(3000);
       }
     }
     
