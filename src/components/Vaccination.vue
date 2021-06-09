@@ -87,6 +87,7 @@
             <th>Name</th>
             <th>Gender</th>
             <th>Id</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -95,6 +96,7 @@
             <td>{{ p.name }}</td>
             <td>{{ p.gender }}</td>
             <td>{{ p.photoId }}</td>
+            <td>{{ getStatusText(p) }}</td>
           </tr>
         </tbody>
       </table>
@@ -483,6 +485,18 @@ export default class Vaccination extends Vue {
   get currentVaccine() {
     if(this.participants && this.participants.length > 0 && this.preferences.dose === 2) {
       return this.participants[0].vaccine;
+    }
+
+    return '';
+  }
+
+  getStatusText(participant:any) {
+    if(participant && participant.status) {
+       if(participant.vaccine) {
+         return `${participant.status} with ${participant.vaccine}`;
+       }
+
+       return participant.status;
     }
 
     return '';
