@@ -98,7 +98,7 @@ export class VaccinationService {
             const options: AxiosRequestConfig = {
                 params: { district_id: districtId , date: date },
             };
-            const response = await axios.get(`${this.baseUrl}/appointment/sessions/calendarByDistrict`, options);
+            const response = await axios.get(`${this.baseUrl}/appointment/sessions/public/calendarByDistrict`, options);
             if (response.status === 200) {
         
                 const centers = response.data.centers;
@@ -259,7 +259,8 @@ export class VaccinationService {
                             id: x.beneficiary_reference_id,
                             gender: x.gender,
                             photoId: x.photo_id_number,
-                            dose1_date : x.dose1_date,
+                            status: x.vaccination_status,
+                            vaccine: x.vaccine
                         }
                     })
                 }
@@ -302,7 +303,7 @@ export class VaccinationService {
     }
 
 
-    async scheduleSlot(token: string, captcha: string, centerId: number, sessionId: string, slot: string, beneficiaries: string[]) {
+    async scheduleSlot(token: string, captcha: string, centerId: number, sessionId: string, slot: string, beneficiaries: string[], dose: number) {
         try {
 
             let options = {
@@ -322,7 +323,7 @@ export class VaccinationService {
                 beneficiaries: beneficiaries,
                 slot: slot,
                 captcha: captcha,
-                dose: 1,
+                dose: dose,
             }
             const response = await axios.post(`${this.baseUrl}/appointment/schedule`, data, options);
             if (response && response.status === 200) {

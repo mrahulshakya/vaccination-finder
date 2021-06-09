@@ -314,6 +314,11 @@ export default class Vaccination extends Vue {
           } else {
             this.matches = response.data;
 
+            if(this.currentVaccine) {
+              // Show only the preffered matches
+              this.matches = this.matches.filter(x=> x.vaccine === this.currentVaccine);
+            }
+
             if(this.preferredCenters && this.preferredCenters.length) {
               this.pMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id === x.center_id));
               if(this.captchaText) {
@@ -410,7 +415,7 @@ export default class Vaccination extends Vue {
 
   async schedule(mathingSession: any, refresh = true) {
     const beneficiaries: string[] =
-      (this.participants && this.participants.filter(x=> x.dose1_date === '').map((x) => x.id)) || [];
+      (this.participants && this.participants.map((x) => x.id)) || [];
     if (!this.captchaText || beneficiaries.length <= 0 || !mathingSession) {
       this.errorMessage = "Insufficient Data. Cannot schedule slot.";
       this.displayMessage(this.errorMessage);
@@ -435,7 +440,8 @@ export default class Vaccination extends Vue {
       Number(mathingSession.center_id),
       mathingSession.session_id,
       this.prefferedSlot,
-      beneficiaries
+      beneficiaries,
+      this.preferences.dose
     );
     if (scheduleResponse && scheduleResponse.data) {
       this.displayMessage(JSON.stringify(scheduleResponse.data));
@@ -472,6 +478,14 @@ export default class Vaccination extends Vue {
 
   set currentDistrict(name: string) {
     this.cDistrict = name;
+  }
+
+  get currentVaccine() {
+    if(this.participants && this.participants.length > 0 && this.preferences.dose === 2) {
+      return this.participants[0].vaccine;
+    }
+
+    return '';
   }
 }
 </script>

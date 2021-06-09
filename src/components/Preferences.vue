@@ -7,7 +7,7 @@
                <th v-if="district && district.length > 0">District</th>
                <th>Age</th>
                <th>Date</th>
-                <th>Dose</th>
+               <th>Dose</th>
             </tr>
         </thead>
         <tbody>
