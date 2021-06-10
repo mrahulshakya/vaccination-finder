@@ -322,6 +322,11 @@ export default class Vaccination extends Vue {
             this.matches = this.matches.filter(x=> x.vaccine === this.currentVaccine);
           }
 
+          if(this.matches) {
+              (document as any).getElementById("myAudio").loop = true;
+              (document as any).getElementById("myAudio").play();
+          }
+
           if(this.preferredCenters && this.preferredCenters.length) {
             this.pMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id === x.center_id));
             this.npMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id !== x.center_id)).slice(0, 5);

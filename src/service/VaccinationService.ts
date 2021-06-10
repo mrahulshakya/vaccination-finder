@@ -59,6 +59,7 @@ export class VaccinationService {
                        
                             if (matchingSession) {
                                 //document.body.style.backgroundColor = "red";
+
                                 matchingCenters.push({
                                     center_id: center.center_id,
                                     name: center.name,
