@@ -8,6 +8,7 @@
                <th>Age</th>
                <th>Date</th>
                <th>Dose</th>
+               <th>Vaccine</th>
             </tr>
         </thead>
         <tbody>
@@ -27,9 +28,17 @@
                     v-model="currentDose" 
                     @option:selected="savePreferences"></v-select>
                     </td>
+                     <td>
+                        <v-select :options="vaccine" 
+                    v-model="currentVaccine" 
+                    @option:selected="savePreferences"></v-select>
+                    </td>
             </tr>
             <tr v-if="centers && centers.length > 0" >
-                     <td colspan="4"> 
+                <td>
+                    Select prefered Center(s)
+                </td>
+                     <td colspan="5"> 
                     <Multiselect track-by="id" label="name" v-model="selectedCenters" :options="centers" multiple @select="savePreferences">
                     </Multiselect>
                 </td>
@@ -83,6 +92,7 @@ export default class Preferences extends Vue {
     district: any[] = [];
     age: number[] = [18, 45];
     dose: number[] = [1, 2];
+    vaccine: string[] = ['','COVAXIN', 'COVISHIELD', 'SPUTNIKV'];
     @Prop({default : ''}) errorMessage!:string;
     vaccinationService = new VaccinationService();
     activeState: any = { state_id : 21,  state_name: 'Maharastra'};
@@ -93,6 +103,7 @@ export default class Preferences extends Vue {
     centers: any[] = [];
     values: any[]  = [];
     currentDose = 1;
+    currentVaccine = '';
 
     beforeMount() {
         this.searchDate = moment().add(1, 'day').toDate();
@@ -107,6 +118,7 @@ export default class Preferences extends Vue {
             this.activeDistrict = this.preferences.activeDistrict;
             this.searchDate = this.preferences.date;
             this.currentDose = this.preferences.dose;
+            this.currentVaccine = this.preferences.vaccine;
             this.selectedCenters = [];
         }  else {
             this.savePreferences();
@@ -174,6 +186,7 @@ export default class Preferences extends Vue {
             date: this.searchDate,
             centers: this.selectedCenters,
             dose: this.currentDose,
+            vaccine: this.currentVaccine,
         }
 
         sessionStorage.setItem('preference', JSON.stringify(preferences));

@@ -30,11 +30,17 @@ export class VaccinationService {
             }
 
             // Pune 363, Bhopal 312
+            let url = `${this.baseUrl}/appointment/sessions/public/calendarByDistrict`;
             const options: AxiosRequestConfig = {
-                params: { district_id: district , date: date },
-                headers: { 'authorization': `Bearer ${token}` },
+                params: { district_id: district , date: date }
             };
-            const response = await axios.get(`${this.baseUrl}/appointment/sessions/calendarByDistrict`, options);
+
+            if(token) {
+                url = `${this.baseUrl}/appointment/sessions/calendarByDistrict`;
+                options.headers = { 'authorization': `Bearer ${token}` };
+            }
+
+            const response = await axios.get(url, options);
             if (response.status === 200) {
                 document.body.style.backgroundColor = "white";
 
@@ -53,9 +59,6 @@ export class VaccinationService {
                        
                             if (matchingSession) {
                                 //document.body.style.backgroundColor = "red";
-                                (document as any).getElementById("myAudio").loop = true;
-                                (document as any).getElementById("myAudio").play();
-
                                 matchingCenters.push({
                                     center_id: center.center_id,
                                     name: center.name,

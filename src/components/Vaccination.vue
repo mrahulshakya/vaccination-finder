@@ -52,10 +52,13 @@
             placeholder="OTP"
             v-model="otpValue"
           />
-          <button @click="handleOnComplete()" :disabled="disableOtp">
-            Start Booking
+          <button @click="handleOnComplete()">
+            Enter Otp
           </button>
         </div>
+        <div class="row">
+        <a href="javascript:void(0)" @click="generateOtp()">Generate Otp</a>
+        </div>>
       </div>
       <div class="col col-4">
         <div class="message">
@@ -147,12 +150,14 @@ export default class Vaccination extends Vue {
   timer: any;
   participants: any[] | null = null;
   captcha: string = "";
-    captcha2: string = "";
+  captcha2: string = "";
   captchaText: string = "";
   preferences: any;
   timeLeft: number = 0;
   preferredCenters: any[] = [];
   errorMessage: string = '';
+  pVaccine: string = '';
+
   get leftTime() {
     return this.timeLeft;
   }
@@ -165,16 +170,18 @@ export default class Vaccination extends Vue {
     this.phoneNumber = sessionStorage.getItem("phoneNumber");
     this.phoneSubmitted = this.phoneNumber ? true : false;
 
-    if (this.tokenExp && this.phoneNumber) {
-      await this.generateOtp();
-    }
+    // if (this.tokenExp && this.phoneNumber) {
+    //   await this.generateOtp();
+    // }
   }
 
   async generateOtp() {
     const response = await this.vaccinationService.generateOtp(
       this.phoneNumber
     );
+
     if (response && response.data) {
+      this.disableOtp = false;
       this.transactionId = response.data.transactionId;
     } else if (response && response.error) {
       this.displayMessage(response.error);
@@ -266,22 +273,23 @@ export default class Vaccination extends Vue {
         );
         if (presponse && presponse.data && presponse.data.length > 0) {
           this.participants = presponse.data;
+          this.currentVaccine  = presponse.data[0].vaccine;
           this.performBooking();
         } else {
           this.displayMessage("Failed to get the list of participants.");
         }
 
-        const captchaResponse = await this.vaccinationService.getCaptcha(this.token);
-        if(captchaResponse && captchaResponse.data) {
-          this.captcha2 = captchaResponse.data;
-        }
+        // const captchaResponse = await this.vaccinationService.getCaptcha(this.token);
+        // if(captchaResponse && captchaResponse.data) {
+        //   this.captcha = captchaResponse.data;
+        // }
       }
     } else if (tokenResponse && tokenResponse.error) {
       this.displayMessage(tokenResponse.error);
     }
   }
 
-  performBooking(interval:number = 10000) {
+  performBooking(interval:number = 5000) {
     document.body.style.backgroundColor = "white";
     if(this.timer) {
       clearInterval(this.timer);
@@ -297,63 +305,54 @@ export default class Vaccination extends Vue {
       this.captcha = '';
       const service = new VaccinationService();
       this.displayMessage(`Attempt No: ${++this.attempt}`);
-      if (this.isTokenExpired()) {
-        this.displayMessage(
-          "token expired. Please enter otp again and press submit to proceed."
-        );
-        this.otpValue = "";
-        this.disableOtp = false;
-        this.messages = ["Please enter otp and try again"];
-        this.generateOtp();
-        clearInterval(this.timer);
-      } else {
-        const response = await service.getAvailableCenters(this.token,
-          (this.participants && this.participants.length) || 0, this.preferences
-        );
-        if (response && response.data) {
-          if (response.data.length === 0) {
-            this.displayMessage("No match found. Retrying after one minute.");
-          } else {
-            this.matches = response.data;
+     
+      const token = this.isTokenExpired() ? '' : this.token;
 
-            if(this.currentVaccine) {
-              // Show only the preffered matches
-              this.matches = this.matches.filter(x=> x.vaccine === this.currentVaccine);
-            }
-
-            if(this.preferredCenters && this.preferredCenters.length) {
-              this.pMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id === x.center_id));
-              if(this.captchaText) {
-                if(this.timer) {
-                  clearInterval(this.timer);
-                }
-                this.handleScheduling(this.pMatches, this.captchaText);
-              }
-              this.npMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id !== x.center_id)).slice(0, 5);
-            } else {
-              this.pMatches = this.matches;
-              this.npMatches = [];
-            }
-
-      
-            const captchResponse = await this.vaccinationService.getCaptcha(
-              this.token
-            );
-            if (captchResponse && captchResponse.data) {
-              this.captcha = captchResponse.data;
-              this.$forceUpdate();
-            }
-            clearInterval(this.timer);
+      const response = await service.getAvailableCenters(token,
+        (this.participants && this.participants.length) || 1, this.preferences
+      );
+      if (response && response.data) {
+        if (response.data.length === 0) {
+          this.displayMessage("No match found. Retrying after 5 seconds.");
+        } else {
+          this.matches = response.data;
+          console.log(this.currentVaccine);
+          if(this.currentVaccine) {
+            // Show only the preffered matches
+            this.matches = this.matches.filter(x=> x.vaccine === this.currentVaccine);
           }
-        }
 
-        if (response && response.error) {
-          this.displayMessage(response.error);
-          this.otpValue = "";
-          this.messages = ["Please enter otp and try again"];
-          this.disableOtp = false;
+          if(this.preferredCenters && this.preferredCenters.length) {
+            this.pMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id === x.center_id));
+            this.npMatches = this.matches.filter(x=> this.preferredCenters.some(y => y.id !== x.center_id)).slice(0, 5);
+          } else {
+            this.npMatches = this.matches;
+            this.pMatches = [];
+          }
+
+          if(token && !this.captcha) {
+              const captchResponse = await this.vaccinationService.getCaptcha(
+                this.token
+              );
+              if (captchResponse && captchResponse.data) {
+                this.captcha = captchResponse.data;
+              }
+          } 
+          
+          console.log('preferred matches', this.pMatches);
+          console.log('non preferred matches', this.npMatches);
+          this.$forceUpdate();
+          clearInterval(this.timer);
         }
       }
+
+      if (response && response.error) {
+        this.displayMessage(response.error);
+        this.otpValue = "";
+        this.messages = ["Please enter otp and try again"];
+        this.disableOtp = false;
+      }
+    
     }, interval);
   }
 
@@ -366,7 +365,7 @@ export default class Vaccination extends Vue {
     sessionStorage.setItem("phoneNumber", this.phoneNumber);
 
     this.displayMessage("Requesting login. Please enter the obtained otp.");
-    await this.generateOtp();
+    //await this.generateOtp();
     this.phoneSubmitted = true;
   }
 
@@ -397,16 +396,8 @@ export default class Vaccination extends Vue {
     }
   }
 
-  resume(interval: number = 10000) {
-    if (this.token && !this.isTokenExpired()) {
-      this.performBooking(interval);
-    } else {
-      this.otpValue = "";
-      this.disableOtp = false;
-      this.messages = ["Please enter otp and try again"];
-      this.vaccinationService.generateOtp(this.phoneNumber);
-      this.displayMessage("Enter otp to continue.");
-    }
+  resume(interval: number = 5000) {
+    this.performBooking(interval);
     (document as any).getElementById("myAudio").pause();
   }
 
@@ -445,33 +436,41 @@ export default class Vaccination extends Vue {
       beneficiaries,
       this.preferences.dose
     );
+
+    this.matches = [];
+    this.pMatches = [];
+    this.npMatches = [];
+    this.captcha = '';
+    this.captchaText = '';
+
     if (scheduleResponse && scheduleResponse.data) {
-      this.displayMessage(JSON.stringify(scheduleResponse.data));
-      this.matches = [];
-      this.pMatches = [];
-      this.npMatches = [];
-      this.captcha = '';
-      this.captchaText = '';
-      
+      this.displayMessage(JSON.stringify(scheduleResponse.data));  
       window.alert(`Booked successfully. ${JSON.stringify(scheduleResponse.data)}`);
     }
 
     if (scheduleResponse && scheduleResponse.error) {
       this.errorMessage = `${scheduleResponse.error}`;
       this.displayMessage(scheduleResponse.error);
+      
       if(refresh) {
         this.resume(3000);
       }
     }
-    
-
   }
 
   handlePreferenceChange(preferences: any) {
     this.preferences = preferences;
     this.currentDistrict = this.preferences.district.district_name;
     this.preferredCenters = this.preferences.centers;
+
+    if(!this.participants || this.participants.length === 0) {
+      this.currentVaccine = this.preferences.vaccine;
+    }
+
+    this.stop();
+    this.resume();
   }
+
 
   cDistrict = 'Pune';
   get currentDistrict() {
@@ -483,11 +482,13 @@ export default class Vaccination extends Vue {
   }
 
   get currentVaccine() {
-    if(this.participants && this.participants.length > 0 && this.preferences.dose === 2) {
-      return this.participants[0].vaccine;
-    }
+    console.log('current vaccine', this.pVaccine);
+    return this.pVaccine;
+  }
 
-    return '';
+
+  set currentVaccine(vaccine: string) {
+    this.pVaccine = vaccine;
   }
 
   getStatusText(participant:any) {
